@@ -37,12 +37,13 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Authentication\TwoFactorAuth\IActivatableAtLogin;
 use OCP\Authentication\TwoFactorAuth\IProvider;
 use OCP\Authentication\TwoFactorAuth\IRegistry;
+use OCP\Authentication\TwoFactorAuth\TwoFactorProviderForUserDisabled;
+use OCP\Authentication\TwoFactorAuth\TwoFactorProviderForUserEnabled;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IConfig;
 use OCP\ISession;
 use OCP\IUser;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\GenericEvent;
 use function array_diff;
 use function array_filter;
 
@@ -79,7 +80,7 @@ class Manager {
 	/** @var ITimeFactory */
 	private $timeFactory;
 
-	/** @var EventDispatcherInterface */
+	/** @var IEventDispatcher */
 	private $dispatcher;
 
 	public function __construct(ProviderLoader $providerLoader,
@@ -91,7 +92,7 @@ class Manager {
 								LoggerInterface $logger,
 								TokenProvider $tokenProvider,
 								ITimeFactory $timeFactory,
-								EventDispatcherInterface $eventDispatcher) {
+								IEventDispatcher $eventDispatcher) {
 		$this->providerLoader = $providerLoader;
 		$this->providerRegistry = $providerRegistry;
 		$this->mandatoryTwoFactor = $mandatoryTwoFactor;
@@ -266,15 +267,13 @@ class Manager {
 			$tokenId = $token->getId();
 			$this->config->deleteUserValue($user->getUID(), 'login_token_2fa', $tokenId);
 
-			$dispatchEvent = new GenericEvent($user, ['provider' => $provider->getDisplayName()]);
-			$this->dispatcher->dispatch(IProvider::EVENT_SUCCESS, $dispatchEvent);
+			$this->dispatcher->dispatchTyped(new TwoFactorProviderForUserEnabled($user, $provider));
 
 			$this->publishEvent($user, 'twofactor_success', [
 				'provider' => $provider->getDisplayName(),
 			]);
 		} else {
-			$dispatchEvent = new GenericEvent($user, ['provider' => $provider->getDisplayName()]);
-			$this->dispatcher->dispatch(IProvider::EVENT_FAILED, $dispatchEvent);
+			$this->dispatcher->dispatchTyped(new TwoFactorProviderForUserDisabled($user, $provider));
 
 			$this->publishEvent($user, 'twofactor_failed', [
 				'provider' => $provider->getDisplayName(),

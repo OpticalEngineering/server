@@ -37,6 +37,8 @@ use OC\Authentication\Events\RemoteWipeStarted;
 use OC\Authentication\Listeners\RemoteWipeActivityListener;
 use OC\Authentication\Listeners\RemoteWipeEmailListener;
 use OC\Authentication\Listeners\RemoteWipeNotificationsListener;
+use OC\Authentication\Listeners\TwoFactorProviderForUserDisabledLegacyListener;
+use OC\Authentication\Listeners\TwoFactorProviderForUserEnabledLegacyListener;
 use OC\Authentication\Listeners\UserDeletedStoreCleanupListener;
 use OC\Authentication\Listeners\UserDeletedTokenCleanupListener;
 use OC\Authentication\Notifications\Notifier as AuthenticationNotifier;
@@ -47,6 +49,8 @@ use OC\DB\MissingIndexInformation;
 use OC\DB\MissingPrimaryKeyInformation;
 use OC\DB\SchemaWrapper;
 use OCP\AppFramework\App;
+use OCP\Authentication\TwoFactorAuth\TwoFactorProviderForUserDisabled;
+use OCP\Authentication\TwoFactorAuth\TwoFactorProviderForUserEnabled;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use OCP\User\Events\UserDeletedEvent;
@@ -268,6 +272,8 @@ class Application extends App {
 		$eventDispatcher->addServiceListener(RemoteWipeFinished::class, RemoteWipeActivityListener::class);
 		$eventDispatcher->addServiceListener(RemoteWipeFinished::class, RemoteWipeNotificationsListener::class);
 		$eventDispatcher->addServiceListener(RemoteWipeFinished::class, RemoteWipeEmailListener::class);
+		$eventDispatcher->addServiceListener(TwoFactorProviderForUserDisabled::class, TwoFactorProviderForUserDisabledLegacyListener::class);
+		$eventDispatcher->addServiceListener(TwoFactorProviderForUserEnabled::class, TwoFactorProviderForUserEnabledLegacyListener::class);
 		$eventDispatcher->addServiceListener(UserDeletedEvent::class, UserDeletedStoreCleanupListener::class);
 		$eventDispatcher->addServiceListener(UserDeletedEvent::class, UserDeletedTokenCleanupListener::class);
 	}
